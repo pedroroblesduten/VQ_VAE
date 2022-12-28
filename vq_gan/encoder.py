@@ -81,8 +81,8 @@ class Encoder(nn.Module):
         x = self.conv1(x) 
         print(f'Shape pos conv1: {x.shape}')
 
-        x = self.residual_dw_128_128(x)
-        print(f'Shape pos 128_128: {x.shape}')
+        # x = self.residual_dw_128_128(x)
+        # print(f'Shape pos 128_128: {x.shape}')
 
         x = self.residual_dw_128_128(x)
         print(f'Shape pos 128_128: {x.shape}')
@@ -90,8 +90,8 @@ class Encoder(nn.Module):
         x = self.residual_dw_128_256(x)
         print(f'Shape pos 128_256: {x.shape}')
 
-        x = self.residual_dw_256_256(x)
-        print(f'Shape pos 256_256: {x.shape}')
+        # x = self.residual_dw_256_256(x)
+        # print(f'Shape pos 256_256: {x.shape}')
 
         x = self.residual_256_512(x)
         print(f'Shape pos 256_512: {x.shape}')

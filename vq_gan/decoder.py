@@ -63,9 +63,9 @@ class Decoder(nn.Module):
         self.residual_512_512 = residual(512, 512, up=False)
 
         self.non_local_512 = NonLocalBlock(512)
-        self.group_norm_512 = GroupNorm(512)
+        self.group_norm_128 = GroupNorm(128)
         self.swish = Swish()
-        self.conv2 = conv(512, args.latent_dim)
+        self.conv2 = conv(128, args.image_channels)
 
     def forward(self, x):
         print('-- COMEÇANDO DECODER --')
@@ -88,17 +88,26 @@ class Decoder(nn.Module):
         
         x = self.att_residual_up_512_256(x)
         print(f'Shape pos att_residual_up_512_256: {x.shape}')
-        x = self.att_residual_up_256_256(x)
-        print(f'Shape pos att_residual_up_256_256: {x.shape}')
+        # x = self.att_residual_up_256_256(x)
+        # print(f'Shape pos att_residual_up_256_256: {x.shape}')
 
         x = self.att_residual_up_256_128(x)
         print(f'Shape pos att_residual_up_256_128: {x.shape}')
-        x = self.att_residual_up_128_128(x)
-        print(f'Shape pos att_residual_up_128_128: {x.shape}')
+        # x = self.att_residual_up_128_128(x)
+        # print(f'Shape pos att_residual_up_128_128: {x.shape}')
 
+        x = self.group_norm_128(x)
+        print(f'Shape pos group_norm_128: {x.shape}')
 
-        print(f'Shape de saída do decoder')
+        x = self.swish(x)
+        print(f'Shape pos swish: {x.shape}')
 
+        x = self.conv2(x)
+        print(f'Shape pos conv2 {x.shape}')
+
+        print(f'Shape de saída do decoder: {x.shape}')
+        
+        print('-- FIM DO DECODER --')
         return x 
 
     

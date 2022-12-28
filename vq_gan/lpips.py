@@ -63,12 +63,12 @@ class LPIPS(nn.Module):
     def forward(self, real_x, fake_x):
         features_real = self.vgg(self.scaling_layer(real_x))
         features_fake = self.vgg(self.scaling_layer(fake_x))
-        diffs = {}
+        diff = {}
 
         for i in range(len(self.channels)):
             diff[i] = (norm_tensor(features_real[i]) - norm_tensor(features_fake[i]))
 
-        return sum([spatial_average(self.lins[i].model(diffs[i])) for i in range(len(self.channels))])
+        return sum([spatial_average(self.lins[i].model(diff[i])) for i in range(len(self.channels))])
 
 class ScalingLayer(nn.Module):
     def __init__(self):
