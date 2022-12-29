@@ -12,8 +12,9 @@ from utils import load_data, weights_init
 import torch.optim as optim
 
 class TrainVQVAE:
-    def __init__(self, args):
-        self.vqvae = VQVAE(args).to(device=args.device)
+    def __init__(self, args, verbose=False):
+        self.verbose = verbose
+        self.vqvae = VQVAE(args, verbose=self.verbose).to(device=args.device)
         self.prepare_training_vqvae()
         self.train(args)
         self.opt_vq = optim.Adam(
@@ -50,7 +51,7 @@ class TrainVQVAE:
                 for i, imgs in zip(pbar, train_dataset):
                     imgs = imgs.to(device=args.device)
                     decoded_images, _, q_loss = self.vqvae(imgs)
-                    if verbose:
+                    if self.verbose:
                         print('FIM DO VQVAE')
                     
 
@@ -69,8 +70,10 @@ class TrainVQVAE:
                     pbar.set_postfix(
                         VQ_loss=np.round(vq_loss.cpu().detach().numpy().item(), 5))
                     pbar.update(0)
+                    
 
                 torch.save(self.vqvae.state_dict(), os.path.join('checkpoints_vqvae', f'vqgan_epoch_{epoch}.pt'))
+                
 
 
 if __name__ == '__main__':
@@ -91,9 +94,11 @@ if __name__ == '__main__':
     parser.add_argument('--disc-factor', type=float, default=1., help='')
     parser.add_argument('--rec-loss-factor', type=float, default=1., help='Weighting factor for reconstruction loss.')
     parser.add_argument('--perceptual-loss-factor', type=float, default=1., help='Weighting factor for perceptual loss.')
+    parser.add_argument('--verbose', type=str, default=False, help='Verbose to control prints in the foward pass')
 
     args = parser.parse_args()
     args.dataset_path = r"C:\Users\pedro\OneDrive\Área de Trabalho\flowers\rose"
+    # args.verbose = True
 
-    train_vqgan = TrainVQVAE(args)
+    train_vqgan = TrainVQVAE(args, verbose=args.verbose)
 
