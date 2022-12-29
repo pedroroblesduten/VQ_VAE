@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 # from encoder import Encoder
 # from decoder import Decoder
-from codebook import Codebook
+from codebook import Codebook, CodebookEMA
 from simpler_encoder import SimplerEncoder as Encoder
 from simpler_encoder import SimplerDecoder as Decoder
 
@@ -12,7 +12,10 @@ class VQVAE(nn.Module):
         self.verbose = verbose
         self.encoder = Encoder(args, verbose=self.verbose).to(device=args.device)
         self.decoder = Decoder(args, verbose=self.verbose).to(device=args.device)
-        self.codebook = Codebook(args, verbose=self.verbose).to(device=args.device)
+        if args.use_ema:
+            self.codebook = CodebookEMA(args, verbose=self.verbose).to(device=args.device)
+        else:
+            self.codebook = Codebook(args, verbose=self.verbose).to(device=args.device)
         self.quant_conv = nn.Conv2d(args.latent_dim, args.latent_dim, 1).to(device=args.device)
         self.post_quant_conv = nn.Conv2d(args.latent_dim, args.latent_dim, 1).to(device=args.device)
 
