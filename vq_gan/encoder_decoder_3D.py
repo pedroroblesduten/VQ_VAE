@@ -33,7 +33,7 @@ class Encoder3D(nn.Module):
                                                dropout=0.0,
                                                num_residual_layers=3
                                                )
-    def forwar(self, x):
+    def forward(self, x):
         if self.verbose:
             print(')-- STARTING ENCODER-3D --')
             print(f'Shape original: {x.shape}')
