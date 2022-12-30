@@ -34,9 +34,9 @@ class ImagePath(Dataset):
         example = self.preprocess_image(self.images[i])
         return example
 
-def load_data(args):
-    train_data = ImagePath(args.dataset_path, size=256)
-    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=False)
+def load_data(path, batch_size):
+    train_data = ImagePath(path, size=256)
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=False)
     return train_loader
 
 def weights_init(m):

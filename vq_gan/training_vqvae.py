@@ -15,6 +15,7 @@ from classical_datasets import LoadDatasets
 class TrainVQVAE:
     def __init__(self, args, verbose=False):
         self.verbose = verbose
+        self.batch_size = args.batch_size
         self.vqvae = VQVAE(args, verbose=self.verbose).to(device=args.device)
         self.prepare_training_vqvae()
         self.train(args)
@@ -42,7 +43,7 @@ class TrainVQVAE:
             list(self.vqvae.post_quant_conv.parameters()),
             lr=args.learning_rate,eps=1e-8, betas=(args.beta1, args.beta2))
 
-        train_dataset, _= LoadDatasets(args.dataset, args.batch_size).returnDataset()
+        train_dataset = LoadDatasets(args).returnDataset()
         if args.dataset == 'MNIST' or args.dataset == 'CIFAR10':
             train_dataset = iter(train_dataset)
         steps_per_epoch = len(train_dataset)
@@ -51,7 +52,9 @@ class TrainVQVAE:
         print('Começando o treino do VQVAE')
         for epoch in range(args.epochs):
             with tqdm(range(len(train_dataset))) as pbar:
-                for i, (imgs, label) in zip(pbar, train_dataset):
+                for i, imgs in zip(pbar, train_dataset):
+                    if args.dataset == 'MNIST' or args.dataset == 'CIFAR10':
+                        imgs = imgs[0]
                     imgs = imgs.to(device=args.device)
                     decoded_images, _, q_loss = self.vqvae(imgs)
                     if self.verbose:
@@ -102,7 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, default='flowers', help='If True, use EMA for codebook update')
 
     args = parser.parse_args()
-    args.dataset_path = r"C:\Users\pedro\OneDrive\Área de Trabalho\flowers\rose"
+    args.dataset_path = r"C:\Users\pedro\OneDrive\Área de Trabalho\flowers\dandelion"
     # args.verbose = True
     args.use_ema = True
     args.dataset = 'CIFAR10'
