@@ -10,6 +10,7 @@ from lpips import LPIPS
 from vqvae import VQVAE
 from utils import load_data, weights_init
 import torch.optim as optim
+from load_mri import LoadMRI
 
 class MriTrainVQVAE:
     def __init__(self, args, verbose=False):
@@ -18,6 +19,7 @@ class MriTrainVQVAE:
         self.mri_vqvae = VQVAE(args, verbose=self.verbose)
         self.prepare_training_mri_vqvae()
         self.train(args)
+        self.loader = LoadMRI(args.dataset_path)
 
     @staticmethod
     def prepare_training_mri_vqvae():
@@ -25,7 +27,7 @@ class MriTrainVQVAE:
         os.makedirs('checkpoints_mri_vqvae', exist_ok=True)
     
     def train(self, args, verbose=False):
-        train_dataset = load_data(args)
+        train_dataset = self.loader.loadImages(args.csv_path)
         steps_per_epoch = len(train_dataset)
         criterion = torch.nn.MSELoss()
         opt_vq = optim.Adam(
