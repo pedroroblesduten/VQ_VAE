@@ -1,16 +1,14 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from helper3d import ResidualStack
+from helper3D import ResidualStack3D
 from monai.networks.blocks import SubpixelUpsample
 
 class Encoder3D(nn.Module):
     def __init__(self, args, verbose=False):
         super().__init__()
         self.verbose = verbose
-        self.channels = [args.image_channels,
-                         image_channels//2,
-                         image_channels//4]
+        self.channels = [args.image_channels, 16, 32, 64, 128]
         self.image_channels = args.image_channels
         self._conv1 = nn.Conv3d(in_channels=self.channels[0],
                                out_channels=self.channels[1],
@@ -18,18 +16,23 @@ class Encoder3D(nn.Module):
                                stride=2,
                                padding=1)
         self._conv2 = nn.Conv3d(in_channels=self.channels[1],
-                               out_channels=self.channels[2],
+                               out_channels=self.channels[3],
                                kernel_size=4,
                                stride=2,
                                padding=1)
-        self._conv3 = nn.Conv3d(in_channels=self.channels[2],
-                                out_channels=self.channels[2],
+        self.conv2m = nn.Conv3d(in_channels=self.channels[3],
+                                out_channels=self.channels[4],
+                                kernel_size=4,
+                                stride=2,
+                                padding=1)
+        self._conv3 = nn.Conv3d(in_channels=self.channels[4],
+                                out_channels=self.channels[4],
                                 kernel_size=3,
                                 stride=1,
                                 padding=1)
         self._relu = nn.ReLU()
-        self._residual_stack = ResidualStack3D(in_channels=self.channels[2],
-                                              res_channels=self.channels[2],
+        self._residual_stack = ResidualStack3D(in_channels=self.channels[4],
+                                              res_channels=self.channels[4],
                                                dropout=0.0,
                                                num_residual_layers=3
                                                )
@@ -47,6 +50,9 @@ class Encoder3D(nn.Module):
         x = self._relu(x)
         if self.verbose:
             print(f'Shape after conv2: {x.shape}')
+        x = self.conv2m(x)
+        x = self._relu(x)
+        print(f'Shape after conv2m: {x.shape}')
         # SEQUENCE OF RESIDUAL BLOCS
         x = self._residual_stack(x)
         if self.verbose:
@@ -63,22 +69,22 @@ class Decoder3D(nn.Module):
         super().__init__()
 
         self.verbose = verbose
-        self.channels = [args.latent_dim, args.latent_dim*2, args.image_channels]
+        self.channels = [args.latent_dim, args.latent_dim*2, args.image_channels, 4, 5, 5,7 ]
         self._conv1 = nn.Conv3d(in_channels=self.channels[0],
-                                out_channels=self.channels[1],
+                                out_channels=self.channels[2],
                                 kernel_size=3,
                                 stride=1,
                                 padding=1)
-        self._residual_stack = ResidualStack(in_channels=channels[1],
-                                             res_channels=channels[1],
-                                             dropout=0.0
+        self._residual_stack = ResidualStack3D(in_channels=self.channels[2],
+                                             res_channels=self.channels[2],
+                                             dropout=0.0,
                                              num_residual_layers=3)
         self._upsample = SubpixelUpsample(dimensions=3,
-                                          in_channels=channels[1],
-                                          out_channels=channels[2],
-                                          scale_factor=)
-        self._conv_tranpose_1 = nn.ConvTranspose3d(in_channels=channels[1],
-                                                   out_channels=channels[2],
+                                          in_channels=self.channels[2],
+                                          out_channels=self.channels[3],
+                                          scale_factor=2)
+        self._conv_tranpose_1 = nn.ConvTranspose3d(in_channels=self.channels[2],
+                                                   out_channels=self.channels[3],
                                                    kernel_size=4,
                                                    stride=2,
                                                    padding=1)
@@ -98,7 +104,7 @@ class Decoder3D(nn.Module):
         # if self.verbose(x):
         #   print(f'Shape after upsample: {x.shape}')
         x = self._conv_tranpose_1(x)
-        if self.verbose(x)
+        if self.verbose:
             print(f'Shape after conv_tranpose: {x.shape}')
 
         return x

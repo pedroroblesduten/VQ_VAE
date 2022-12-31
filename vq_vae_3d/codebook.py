@@ -13,7 +13,7 @@ class Codebook3D(nn.Module):
     https://github.com/karpathy/deep-vector-quantization/blob/main/dvq/model/quantize.py
     """
     def __init__(self, args, verbose=False):
-        super(Codebook, self).__init__()
+        super().__init__()
         self.verbose = verbose
         self.num_codebook_vectors = args.num_codebook_vectors
         self.latent_dim = args.latent_dim
@@ -78,9 +78,7 @@ class Codebook3D(nn.Module):
 
 class CodebookEMA3D(nn.Module):
     def __init__(self, args, verbose=False):
-        super(CodebookEMA, self).__init__()
-
-        self.verbose = verbose
+        super().__init__()
         #Initialization of the codeebooks
         self.num_codebook_vectors = args.num_codebook_vectors
         self.latent_dim = args.latent_dim

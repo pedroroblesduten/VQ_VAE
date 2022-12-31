@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 # from encoder import Encoder
 # from decoder import Decoder
-from codebook import Codebook3D
+from codebook import Codebook3D, CodebookEMA3D
 from encoder_decoder_3D import Encoder3D, Decoder3D 
 
 
 class MRI_VQVAE(nn.Module):
     def __init__(self, args, verbose=False):
-        super(VQVAE, self).__init__()
+        super().__init__()
         self.verbose = verbose
         self.use_ema = args.use_ema
 

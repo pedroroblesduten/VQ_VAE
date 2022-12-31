@@ -9,7 +9,7 @@ class Residual3D(nn.Module):
             nn.Conv3d(in_channels, res_channels,
                       kernel_size=3, stride=1, padding=1),
             nn.ReLU(True),
-            nn.Droupout(dropout),
+            nn.Dropout(dropout),
             nn.Conv3d(res_channels, in_channels,
                       kernel_size=1, stride=1)
         )
@@ -17,8 +17,8 @@ class Residual3D(nn.Module):
     def forward(self, x):
         return x + self._res_block(x)
 
-class ResidualStack3D(nn.Module);
-    def __init__(self, in_channels, res_channels, dropout=0.0, num_residual_layers):
+class ResidualStack3D(nn.Module):
+    def __init__(self, in_channels, res_channels, dropout, num_residual_layers):
         super().__init__()
         self._num_residual_layers = num_residual_layers
         self._res_layers = nn.ModuleList([
@@ -27,8 +27,8 @@ class ResidualStack3D(nn.Module);
         ])
 
     def forward(self, x):
-        for i in range(self,_num_residual_layers);
-            x = self._layers[i](x)
+        for i in range(self._num_residual_layers):
+            x = self._res_layers[i](x)
         x = F.relu(x)
         return x
 

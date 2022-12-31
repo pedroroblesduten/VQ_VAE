@@ -9,6 +9,7 @@ import nilearn
 class LoadMRI():
     def __init__(self, args):
         super().__init__()
+        self.args = args
         self.dataPath = args.dataset_path
         self.batch_size = args.batch_size
         self.transforms = Compose([
@@ -17,12 +18,14 @@ class LoadMRI():
         ])
         
 
-    def getImagePath(self, args, separate_by_class=True):
-        csv = pd.read_csv(args.csv_path)
+    def getImagePath(self, separate_by_class=True):
+        csv = pd.read_csv(self.args.csv_path)
         csv = csv.sample(frac=1)
         if separate_by_class:
             ad = csv.loc[csv['Group'] == 'AD']
             ad_imgs =[os.sep.join([self.dataPath, f]) for f in list(ad['folder'])]
+            
+
 
             cn = csv.loc[csv['Group'] == 'CN']
             cn_imgs = [os.sep.join([self.dataPath, f]) for f in list(cn['folder'])]
@@ -37,9 +40,9 @@ class LoadMRI():
             return images, None, None
             
 
-    def loadImages(self, args, separate_by_class=True):
+    def loadImages(self, separate_by_class=True):
         if separate_by_class:
-            ad_imgs, cn_imgs, mci_imgs = self.getImagePath(args.csv_path, separate_by_class)
+            ad_imgs, cn_imgs, mci_imgs = self.getImagePath()
 
             ad_dataset = ImageDataset(image_files=ad_imgs, transform=self.transforms)
             ad_dataloader = DataLoader(ad_dataset, batch_size=self.batch_size)
@@ -49,10 +52,10 @@ class LoadMRI():
 
             mci_dataset = ImageDataset(image_files=mci_imgs, transform=self.transforms)
             mci_dataloader = DataLoader(mci_dataset, batch_size=self.batch_size)
-            return ad_dataset, cn_dataset, mci_dataset
+            return ad_dataloader, cn_dataloader, mci_dataloader
 
         else:
-            images, none1, none2 = self.getImagePath(args.csv_path, separate_by_class)
+            images, none1, none2 = self.getImagePath(self.args.csv_path, separate_by_class)
             return images, none1, none2
 
 
@@ -61,7 +64,7 @@ class SaveMRI():
     def __init__(self, args):
         super().__init__()
 
-        self.data_path = args.dataset_path
+        self.data_path = args.save_path
 
 
     def saveImage(self, tensor, img_path):
