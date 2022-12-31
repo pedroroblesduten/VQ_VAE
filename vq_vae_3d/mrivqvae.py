@@ -3,17 +3,17 @@ import torch.nn as nn
 # from encoder import Encoder
 # from decoder import Decoder
 from codebook import Codebook
-from mri_encoder import Encoder
-from mri_encoder import Decoder
+from encoder_decoder_3D import Encoder3D, Decoder3D 
+
 
 class MRI_VQVAE(nn.Module):
     def __init__(self, args, verbose=False):
         super(VQVAE, self).__init__()
         self.verbose = verbose
-        self.encoder = Encoder(args, verbose=self.verbose).to(device=args.device)
-        self.decoder = Decoder(args, verbose=self.verbose).to(device=args.device)
+        self.encoder = Encoder3D(args, verbose=self.verbose).to(device=args.device)
+        self.decoder = Decoder3D(args, verbose=self.verbose).to(device=args.device)
         self.codebook = Codebook(args, verbose=self.verbose).to(device=args.device)
-        self.quant_conv = nn.Conv2d(args.latent_dim, args.latent_dim, 1).to(device=args.device)
+        self.quant_conv = nn.Conv3d(args.latent_dim, args.latent_dim, 1).to(device=args.device)
         self.post_quant_conv = nn.Conv3d(args.latent_dim, args.latent_dim, 1).to(device=args.device)
 
     def forward(self, imgs):
