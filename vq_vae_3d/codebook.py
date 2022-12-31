@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 from scipy.cluster.vq import kmeans2
 
-class Codebook(nn.Module):
+class Codebook3D(nn.Module):
     """
     Neural Discrete Representation Learning, van den Oord et al. 2017
     https://arxiv.org/abs/1711.00937
@@ -76,7 +76,7 @@ class Codebook(nn.Module):
 # Some works shows that EMA convergers faster and are independet of the choice of the optimizer
 # Implementation follows: https://colab.research.google.com/github/zalandoresearch/pytorch-vq-vae/blob/master/vq-vae.ipynb#scrollTo=fWmjFfa8U5NI
 
-class CodebookEMA(nn.Module):
+class CodebookEMA3D(nn.Module):
     def __init__(self, args, verbose=False):
         super(CodebookEMA, self).__init__()
 

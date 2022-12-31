@@ -7,19 +7,19 @@ import torch.nn as nn
 from torchvision import utils as vutils
 from discriminator import Discriminator
 from lpips import LPIPS
-from vqvae import VQVAE
+from mrivqvae import MRI_VQVAE
 from utils import load_data, weights_init
 import torch.optim as optim
-from load_mri import LoadMRI
+from load_mri import LoadMRI, SaveMRI
 
 class MriTrainVQVAE:
     def __init__(self, args, verbose=False):
 
         self.verbose = verbose
-        self.mri_vqvae = VQVAE(args, verbose=self.verbose)
+        self.mri_vqvae = MRI_VQVAE(args, verbose=self.verbose)
         self.prepare_training_mri_vqvae()
         self.train(args)
-        self.loader = LoadMRI(args.dataset_path)
+        self.loader = LoadMRI(args)
 
     @staticmethod
     def prepare_training_mri_vqvae():
@@ -27,7 +27,7 @@ class MriTrainVQVAE:
         os.makedirs('checkpoints_mri_vqvae', exist_ok=True)
     
     def train(self, args, verbose=False):
-        train_dataset = self.loader.loadImages(args.csv_path)
+        train_dataset = self.loader.loadImages(args)
         steps_per_epoch = len(train_dataset)
         criterion = torch.nn.MSELoss()
         opt_vq = optim.Adam(
@@ -57,9 +57,8 @@ class MriTrainVQVAE:
 
                     if epoch % 5 == 0 and i % 10 == 0:
                         with torch.no_grad():
-                            real_fake_images = torch.cat((imgs[:4], decoded_images.add(1).mul(0.5)[:4]))
-                            vutils.save_image(real_fake_images, os.path.join('results_mri_vqvae', f'{epoch}_{i}.jpg'), nrow=4)
-                        pbar.set_postfix(
+                            saver = SaveMRI(args)
+                            saver.saveImage(decoded_images, 'output_epoch_{epoch}')
                             VQ_LOSS = f'E: {epoch}' + str(np.round(vq_loss.cpu().detach().numpy().item(), 5)))
                         pbar.update(0)
                 torch.save(self.mri_vqvae.state_dict(), os.path.join('checkpoints_mri_vqvae', f'mri_vqvae_{epoch}.pt'))
@@ -86,9 +85,12 @@ if __name__ == '__main__':
     parser.add_argument('--rec-loss-factor', type=float, default=1., help='Weighting factor for reconstruction loss.')
     parser.add_argument('--perceptual-loss-factor', type=float, default=1., help='Weighting factor for perceptual loss.')
     parser.add_argument('--verbose', type=str, default=False, help='Verbose to control prints in the foward pass')
+    parser.add_argument('--use_ema', type=str, default=True, help='If True, use EMA for codebook update')
+    parser.add_argument('--save_path' type=str, default='/save_outputs', helper='Path for save autoencoder outputs')
+    parser.add_argument('--csv_path', type=str, default='/scratch2/pedroroblesduten/CSV_3_CLASSES_COMPLETO.ADNI.csv')
+    parser.add_argument('--dataset_path', type=str, default='/scratch2/turirezende/BRAIN_COVID/data/iamges/')
 
     args = parser.parse_args()
-    args.dataset_path = r"C:\Users\pedro\OneDrive\Área de Trabalho\flowers\rose"
     # args.verbose = True
 
     train_vqgan = MriTrainVQVAE(args, verbose=args.verbose)

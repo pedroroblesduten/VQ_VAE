@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 # from encoder import Encoder
 # from decoder import Decoder
-from codebook import Codebook
+from codebook import Codebook3D
 from encoder_decoder_3D import Encoder3D, Decoder3D 
 
 
@@ -10,9 +10,14 @@ class MRI_VQVAE(nn.Module):
     def __init__(self, args, verbose=False):
         super(VQVAE, self).__init__()
         self.verbose = verbose
+        self.use_ema = args.use_ema
+
         self.encoder = Encoder3D(args, verbose=self.verbose).to(device=args.device)
         self.decoder = Decoder3D(args, verbose=self.verbose).to(device=args.device)
-        self.codebook = Codebook(args, verbose=self.verbose).to(device=args.device)
+        if self.use_ema:
+            self.codebook = CodebookEMA3D(args, verbose=self.verbose).to(device=args.device)
+        else:
+            self.codebook = Codebook3D(args, verbose=self.verbose).to(device=args.device)
         self.quant_conv = nn.Conv3d(args.latent_dim, args.latent_dim, 1).to(device=args.device)
         self.post_quant_conv = nn.Conv3d(args.latent_dim, args.latent_dim, 1).to(device=args.device)
 
