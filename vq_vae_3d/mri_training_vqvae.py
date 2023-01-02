@@ -62,7 +62,7 @@ class MriTrainVQVAE:
                     if epoch % 5 == 0 and i % 10 == 0:
                         with torch.no_grad():
                             saver = SaveMRI(args)
-                            saver.saveImage(decoded_images, 'output_epoch_{epoch}')
+                            saver.saveImage(decoded_images, f'output_epoch_{epoch}')
                             VQ_LOSS = (f'E: {epoch}' + str(np.round(vq_loss.cpu().detach().numpy().item(), 5)))
                         pbar.update(0)
                 torch.save(self.mri_vqvae.state_dict(), os.path.join('checkpoints_mri_vqvae', f'mri_vqvae_{epoch}.pt'))
