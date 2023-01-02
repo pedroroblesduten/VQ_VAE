@@ -108,24 +108,18 @@ class CodebookEMA3D(nn.Module):
         # BCHWD --> BHWDC
         z = z.permute(0, 2, 3, 4, 1).contiguous()
         z_shape = z.shape
-        print(f'ZSHAPE: {z_shape}')
         z_flattened = z.view(-1, self.latent_dim)
 
 
         d = (torch.sum(input=(z_flattened**2), dim=1, keepdim=True)
             + torch.sum(input=(self.embedding.weight**2), dim=1)
             - 2*(torch.matmul(z_flattened, self.embedding.weight.t())))
-        print(f'z_flattened shape: {z_flattened.shape}')
-        print(f'distances: {d}')
 
         encodings_indices = torch.argmin(d, dim=1).unsqueeze(1)
-        print(f'shape indices: {encodings_indices.shape}')
         encodings = torch.zeros(encodings_indices.shape[0], self.num_codebook_vectors, device=z.device)
         encodings.scatter_(1, encodings_indices, 1)
 
 
-        print(f'encodings shape {encodings.shape}')
-        print(f'embedding_weight shape: {self.embedding.weight.shape}')
         z_q = torch.matmul(encodings, self.embedding.weight).view(z.shape)
         
         if self.training:
@@ -150,18 +144,8 @@ class CodebookEMA3D(nn.Module):
         # q_latent_loss = F.mse_loss(z_q, z.detach())
         loss = self.beta*e_latent_loss
         z_q = z + (z_q - z).detach()
-        print(f'0: {z_q.shape[0]}')
-        print(f'1: {z_q.shape[1]}')
-        print(f'2: {z_q.shape[2]}')
-        print(f'3: {z_q.shape[3]}')
-        print(f'4: {z_q.shape[4]}')
 
         z_q = z_q.permute(0, 4, 1, 2, 3)
-        print(f'0: {z_q.shape[0]}')
-        print(f'1: {z_q.shape[1]}')
-        print(f'2: {z_q.shape[2]}')
-        print(f'3: {z_q.shape[3]}')
-        print(f'4: {z_q.shape[4]}')
         if self.verbose:
             print(f'Shape do espaço latente de saida do codebook: {z_q.shape}')
             print('-- FIM DO CODEBOOK --')
