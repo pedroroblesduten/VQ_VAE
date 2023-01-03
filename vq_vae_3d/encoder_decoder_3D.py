@@ -4,6 +4,9 @@ import torch.nn.functional as F
 from helper3D import ResidualStack3D
 from monai.networks.blocks import SubpixelUpsample
 
+#Follows the architecture presents on: https://arxiv.org/pdf/2209.03177.pdf
+#Adn the implementation from: https://github.com/AmigoLab/SynthAnatomy
+
 class EncoderBlock3D(nn.Module):
     def __init__(self, latent_dim, i, n_l, verbose=False):
         super().__init__()
