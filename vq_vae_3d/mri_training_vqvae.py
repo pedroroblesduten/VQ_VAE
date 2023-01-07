@@ -5,8 +5,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torchvision import utils as vutils
-from discriminator import Discriminator
-from lpips import LPIPS
 from mrivqvae import MRI_VQVAE
 from utils import load_data, weights_init
 import torch.optim as optim
@@ -28,10 +26,8 @@ class MriTrainVQVAE:
         os.makedirs('checkpoints_mri_vqvae', exist_ok=True)
     
     def train(self, args, verbose=False):
-        ad, cn, mci = self.loader.loadImages()
-        train_dataset = cn
-        print(len(cn))
-        print(next(iter(cn)))
+        mri_adni = self.loader.loadImages(separate_by_class=False)
+        train_dataset = mri_adni
         steps_per_epoch = len(train_dataset)
         criterion = torch.nn.MSELoss()
         opt_vq = optim.Adam(
@@ -46,7 +42,7 @@ class MriTrainVQVAE:
         for epoch in range(args.epochs):
             with tqdm(range(len(train_dataset))) as pbar:
                 for i, imgs in zip(pbar, train_dataset):
-                    imgs = imgs.to(device=args.device)
+                    imgs = imgs.to(device=args.device)[:, :, :88, :104, :88]
                     decoded_images, min_indices, q_loss = self.mri_vqvae(imgs)
                     if self.verbose:
                         print('FIM DO VQVAE')
@@ -62,7 +58,7 @@ class MriTrainVQVAE:
                     if epoch % 5 == 0 and i % 10 == 0:
                         with torch.no_grad():
                             saver = SaveMRI(args)
-                            saver.saveImage(decoded_images, f'output_epoch_{epoch}')
+                            saver.saveImage(decoded_images, f'output_epoch_{epoch}_batch_{i}')
                             VQ_LOSS = (f'E: {epoch}' + str(np.round(vq_loss.cpu().detach().numpy().item(), 5)))
                         pbar.update(0)
                 torch.save(self.mri_vqvae.state_dict(), os.path.join('checkpoints_mri_vqvae', f'mri_vqvae_{epoch}.pt'))
@@ -78,7 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('--beta', type=float, default=0.25, help='Commitment loss scalar (default: 0.25)')
     parser.add_argument('--image-channels', type=int, default=1, help='Number of channels of images (default: 3)')
     parser.add_argument('--device', type=str, default="cuda", help='Which device the training is on')
-    parser.add_argument('--batch-size', type=int, default=3, help='Input batch size for training (default: 6)')
+    parser.add_argument('--batch-size', type=int, default=8, help='Input batch size for training (default: 6)')
     parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train (default: 50)')
     parser.add_argument('--learning-rate', type=float, default=2.25e-05, help='Learning rate (default: 0.0002)')
     parser.add_argument('--beta1', type=float, default=0.5, help='Adam beta param (default: 0.0)')
@@ -89,12 +85,12 @@ if __name__ == '__main__':
     parser.add_argument('--perceptual-loss-factor', type=float, default=1., help='Weighting factor for perceptual loss.')
     parser.add_argument('--verbose', type=str, default=False, help='Verbose to control prints in the foward pass')
     parser.add_argument('--use_ema', type=str, default=True, help='If True, use EMA for codebook update')
-    parser.add_argument('--save_path', type=str, default='/save_outputs', help='Path for save autoencoder outputs')
+    parser.add_argument('--save_path', type=str, default='./results_mri_vqvae', help='Path for save autoencoder outputs')
     parser.add_argument('--csv_path', type=str, default='/scratch2/pedroroblesduten/CSV_3_CLASSES_COMPLETO_ADNI.csv')
     parser.add_argument('--dataset_path', type=str, default='/scratch2/turirezende/BRAIN_COVID/data/ADNI/images')
 
     args = parser.parse_args()
-    args.verbose = True
+    # args.verbose = True
 
     train_vqgan = MriTrainVQVAE(args, verbose=args.verbose)
     

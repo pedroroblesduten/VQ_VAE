@@ -4,9 +4,6 @@ import torch.nn.functional as F
 from helper3D import ResidualStack3D
 from monai.networks.blocks import SubpixelUpsample
 
-#Follows the architecture presents on: https://arxiv.org/pdf/2209.03177.pdf
-#Adn the implementation from: https://github.com/AmigoLab/SynthAnatomy
-
 class EncoderBlock3D(nn.Module):
     def __init__(self, latent_dim, i, n_l, verbose=False):
         super().__init__()
@@ -85,6 +82,8 @@ class Encoder3D(nn.Module):
                                   padding=1)
 
     def forward(self, x):
+        if self.verbose:
+            print(f'Shape before encoder: {x.shape}')
         for block in self.encoder_blocks:
             x = block(x)
         x = self.conv_out(x)
@@ -105,7 +104,8 @@ class Decoder3D(nn.Module):
                 self.latent_dim, i, n_levels, self.verbose))
 
     def forward(self, x):
-        print(f'shape de entrada do decoder: {x.shape}')
+        if self.verbose:
+            print(f'shape de entrada do decoder: {x.shape}')
         x = self.conv_in(x)
         for block in self.decoder_blocks:
             x = block(x)

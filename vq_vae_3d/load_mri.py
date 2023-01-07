@@ -1,10 +1,11 @@
 import monai
 from monai.data import ImageDataset, DataLoader
-from monai.transforms import AddChannel, Compose, ScaleIntensity, ToTensor
+from monai.transforms import AddChannel, Compose, ScaleIntensity, ToTensor, Resize
 import os
 import pandas as pd
 import nibabel as nib
 import nilearn
+import numpy as np
 
 class LoadMRI():
     def __init__(self, args):
@@ -37,7 +38,7 @@ class LoadMRI():
 
         else:
             images = [os.sep.join([self.dataPath, f]) for f in list(csv['folder'])]
-            return images, None, None
+            return images
             
 
     def loadImages(self, separate_by_class=True):
@@ -55,8 +56,10 @@ class LoadMRI():
             return ad_dataloader, cn_dataloader, mci_dataloader
 
         else:
-            images, none1, none2 = self.getImagePath(self.args.csv_path, separate_by_class)
-            return images, none1, none2
+            images = self.getImagePath(separate_by_class)
+            imgs_dataset = ImageDataset(image_files=images, transform=self.transforms)
+            imgs_dataloader = DataLoader(imgs_dataset, batch_size=self.batch_size)
+            return imgs_dataloader
 
 
 
@@ -68,9 +71,10 @@ class SaveMRI():
 
 
     def saveImage(self, tensor, img_path):
-        img_array = tensor[0].to('cpu').detach().numpy()
-        img_nii = nib.NiftiImage(img_array, np.eye(4))
-        save_path = os.path.join(self.data_path, img_path, '.nii.gz')
+        img_array = tensor[0, 0, :, :, :].to('cpu').detach().numpy()
+        img_nii = nib.Nifti1Image(img_array, np.eye(4))
+        save_path = os.path.join(self.data_path, img_path+'.nii.gz')
+        
         nib.save(img_nii, save_path)
 
 
