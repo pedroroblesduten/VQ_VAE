@@ -30,7 +30,6 @@ class MRI_VQVAE(nn.Module):
         codebook_mapping, codebook_indices, q_loss = self.codebook(quant_conv_encoded_images)
         if self.verbose:
             print(f'Shape do espaço latente antes do decoder: {codebook_mapping.shape}')
-            print(f'Shape dos indices: {codebook_indices.shape}')
         post_quant_conv_mapping = self.post_quant_conv(codebook_mapping)
         if self.verbose:
             print('Indo para o decoder')

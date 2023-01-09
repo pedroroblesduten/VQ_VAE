@@ -31,6 +31,7 @@ class Codebook3D(nn.Module):
             print('-- COMEÇANDO CODEBOOK --')
         z = z.permute(0, 2, 3, 1).contiguous()
         z_flattened = z.view(-1, self.latent_dim)
+
         
         # Data dependent codebook initialization follows:
         # https://arxiv.org/pdf/2005.08520.pdf
@@ -92,6 +93,7 @@ class CodebookEMA3D(nn.Module):
         self.embedding.weight.data.normal_()
         
         self.register_buffer('_ema_cluster_size', torch.zeros(self.num_codebook_vectors))
+        self.register_buffer('data_initialized', torch.zeros(1))
         self._ema_w = nn.Parameter(torch.Tensor(self.num_codebook_vectors, self.latent_dim))
         self._ema_w.data.normal_()
 
@@ -109,6 +111,7 @@ class CodebookEMA3D(nn.Module):
         z = z.permute(0, 2, 3, 4, 1).contiguous()
         z_shape = z.shape
         z_flattened = z.view(-1, self.latent_dim)
+        print(f'Shape z_flattened: {z_flattened.shape}')
 
 
         d = (torch.sum(input=(z_flattened**2), dim=1, keepdim=True)
@@ -121,7 +124,15 @@ class CodebookEMA3D(nn.Module):
 
 
         z_q = torch.matmul(encodings, self.embedding.weight).view(z.shape)
-        
+
+        # if self.training and self.data_initialized.item() == 0:
+        #    if self.verbose:
+        #        print('Running kmeans for codebook initialization')
+        #    rp = torch.randperm(z_flattened.size(0))
+        #    kmeans = kmeans2(z_flattened[rp[:20000]].data.cpu().numpy(), self.num_codebook_vectors, minit='points')
+        #    self.embedding.weight.data.copy_(torch.from_numpy(kmeans[0]))
+        #    self.data_initialized.fill_(1)
+                
         if self.training:
             if self.verbose:
                 print('Starting EMA update')
@@ -144,8 +155,14 @@ class CodebookEMA3D(nn.Module):
         # q_latent_loss = F.mse_loss(z_q, z.detach())
         loss = self.beta*e_latent_loss
         z_q = z + (z_q - z).detach()
+        if self.verbose:
+            print(f'Shape dos indices: {encodings_indices.shape}')
+            print(f'Shape do codebook: {dw.shape}')
+            print(f'Shape do espaço latente: {z_q.shape}')
+        
 
         z_q = z_q.permute(0, 4, 1, 2, 3)
+    
         if self.verbose:
             print(f'Shape do espaço latente de saida do codebook: {z_q.shape}')
             print('-- FIM DO CODEBOOK --')

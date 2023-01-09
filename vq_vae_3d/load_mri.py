@@ -78,4 +78,7 @@ class SaveMRI():
         nib.save(img_nii, save_path)
 
 
+class LoadSaveIndex():
+    def __init__(self, config):
+
 
