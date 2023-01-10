@@ -17,7 +17,7 @@ class MriRunVQVAE:
         self.loader_mri = LoadMRI(args)
         self.saver_mri = SaveMRI(args)
         self.saver_index = LoadSaveIndex(args)
-
+        self.run_batch_size = 1
         self.forward_run(args)
 
     def forward_run(self, args, verbose=False):
@@ -78,6 +78,10 @@ if __name__ == '__main__':
     args.verbose = True
 
     run_vqgan = MriRunVQVAE(args, verbose=args.verbose)
+    loader = LoadSaveIndex(args)
+    index = loader.loadIndex(2)
+    for x in index:
+        print(x.shape)
 
         
 

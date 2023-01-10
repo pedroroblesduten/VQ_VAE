@@ -98,14 +98,17 @@ class LoadSaveIndex():
         self.batch_size = args.batch_size
 
     def saveIndex(self, list_of_tensors):
+
         if not os.path.exists(self.index_path):
             os.makedirs(self.index_path)
         
-        for batch in list_of_tensors:
+        for b, batch in enumerate(list_of_tensors):
             array = batch.cpu().numpy()
             img_index = np.array_split(array.flatten(), self.batch_size)
-            for img in img_index:
-                np.save("idx_array_batch_{batch}_{img}.npy", img)
+            for i, img in enumerate(img_index):
+                
+                path_save = os.path.join(self.index_path, f"idx_array_batch_{b}_{i}.npy")
+                np.save(path_save, img)
 
     def loadIndex(self, batch_size):
         
@@ -113,12 +116,13 @@ class LoadSaveIndex():
         list_of_arrays = []
         for file in arrays_files:
             array = np.load(os.path.join(self.index_path, file))
-            list_of_arrays.append(array)
+            print(array.shape)
+            list_of_arrays.append(torch.tensor(array))
 
+        tensor_of_tensors = torch.stack(list_of_arrays)
+        #dataset = torch.utils.data.TensorDataset(*map(torch.from_numpy, list_of_arrays))
 
-        dataset = torch.utils.data.TensorDataset(*map(torch.from_numpy, list_of_arrays))
-
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        dataloader = DataLoader(tensor_of_tensors, batch_size=batch_size, shuffle=True)
         return dataloader
 
             
