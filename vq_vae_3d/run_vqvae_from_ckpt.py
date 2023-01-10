@@ -7,7 +7,7 @@ import os
 from utils import fake_dataset
 from mrivqvae import MRI_VQVAE
 from tqdm import tqdm
-
+from my_minGPT import GPT, GPTconfig
 class MriRunVQVAE:
     def __init__(self, args, verbose=True):
         
@@ -82,6 +82,25 @@ if __name__ == '__main__':
     index = loader.loadIndex(2)
     for x in index:
         print(x.shape)
+
+    gptconf = GPTconfig(
+    block_size = 1573, # how far back does the model look? i.e. context size
+    n_layers = 1, n_heads = 2, embedding_dim = 768 # size of the mod, # for determinism
+)
+    device = 'cuda'
+    model = GPT(gptconf)
+    model.to(device)
+
+    optimizer = model.configure_optimizers(weight_decay=1e-2, learning_rate=1e-4,betas=(0.9, 0.95))
+
+
+# sequence = torch.randint(low=1, high=1025,(batch_size, block_size))
+
+    out = model.generate(index, 3)
+    print(out.shape)
+
+    print(out)
+
 
         
 
