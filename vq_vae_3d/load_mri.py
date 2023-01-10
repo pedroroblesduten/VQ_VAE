@@ -4,12 +4,11 @@ from monai.transforms import AddChannel, Compose, ScaleIntensity, ToTensor, Resi
 import os
 import pandas as pd
 import nibabel as nib
-import nilearn
 import numpy as np
+import torch
 
-class LoadMRI():
+class LoadMRI:
     def __init__(self, args):
-        super().__init__()
         self.args = args
         self.dataPath = args.dataset_path
         self.batch_size = args.batch_size
@@ -63,22 +62,78 @@ class LoadMRI():
 
 
 
-class SaveMRI():
+class SaveMRI:
     def __init__(self, args):
-        super().__init__()
 
         self.data_path = args.save_path
+        self.save_img_mode = args.save_mode
 
 
     def saveImage(self, tensor, img_path):
         img_array = tensor[0, 0, :, :, :].to('cpu').detach().numpy()
         img_nii = nib.Nifti1Image(img_array, np.eye(4))
-        save_path = os.path.join(self.data_path, img_path+'.nii.gz')
-        
+
+        if self.save_img_mode == 'run' or 'Run':
+            repo_name = "forward_results"
+
+        elif self.save_img_mode == 'training' or 'Training':
+            repo_name = 'training_results'
+
+        elif self.save_img_mode == 'corrected' or 'Corrected':
+            repo_name = 'corrected_results'
+
+        full_path = os.path.join(self.save_path, repo_name)
+        if not os.path.exists(full_path):
+            os.makedirs(full_path)
+
+        save_path = os.path.join(full_path, img_path + '.nii.gz')
+            
         nib.save(img_nii, save_path)
 
 
 class LoadSaveIndex():
-    def __init__(self, config):
+    def __init__(self, args):
+        
+        self.index_path = args.index_path
+        self.batch_size = args.batch_size
+
+    def saveIndex(self, list_of_tensors):
+        if not os.path.exists(self.index_path):
+            os.makedirs(self.index_path)
+        
+        for batch in list_of_tensors:
+            array = batch.cpu().numpy()
+            img_index = np.array_split(array.flatten(), self.batch_size)
+            for img in img_index:
+                np.save("idx_array_batch_{batch}_{img}.npy", img)
+
+    def loadIndex(self, batch_size):
+        
+        arrays_files = os.listdir(self.index_path)
+        list_of_arrays = []
+        for file in arrays_files:
+            array = np.load(os.path.join(self.index_path, file))
+            list_of_arrays.append(array)
+
+
+        dataset = torch.utils.data.TensorDataset(*map(torch.from_numpy, list_of_arrays))
+
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        return dataloader
+
+            
+            
+
+
+        
+
+
+
+        
+        
+
+    
+
+
 
 

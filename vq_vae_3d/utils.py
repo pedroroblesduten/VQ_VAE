@@ -1,10 +1,12 @@
 import os
 import albumentations
 import numpy as np
+import torch
 import torch.nn as nn
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as pyplot
+from torch.utils.data import DataLoader, TensorDataset
 
 class ImagePath(Dataset):
     def __init__(self, path, size=None):
@@ -60,6 +62,13 @@ def plot_images(images):
     axarr[2].imshow(half_sample.cpu().detach().numpy()[0].transpose(1, 2, 0))
     axarr[3].imshow(full_sample.cpu().detach().numpy()[0].transpose(1, 2, 0))
     plt.show()
+
+def fake_dataset(batch_size, n_images=10):
+    data = torch.stack([torch.randn(1, 88, 104, 88) for i in range(n_images)])
+    dataloader = DataLoader(data, batch_size=batch_size, shuffle=True)
+    return dataloader
+
+    
 
 
 

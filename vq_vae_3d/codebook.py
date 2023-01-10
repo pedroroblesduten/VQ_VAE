@@ -157,7 +157,6 @@ class CodebookEMA3D(nn.Module):
         z_q = z + (z_q - z).detach()
         if self.verbose:
             print(f'Shape dos indices: {encodings_indices.shape}')
-            print(f'Shape do codebook: {dw.shape}')
             print(f'Shape do espaço latente: {z_q.shape}')
         
 
