@@ -92,31 +92,44 @@ class SaveMRI:
 
 
 class LoadSaveIndex():
-    def __init__(self, args):
+    def __init__(self, args, batch_size=1):
         
         self.index_path = args.index_path
-        self.batch_size = args.batch_size
+        self.batch_size = batch_size
+        self.create_path(self.index_path)
 
-    def saveIndex(self, list_of_tensors):
+    def create_path(self, path):
+        if not os.path.exists(path):
+            os.makedirs(path)
 
-        if not os.path.exists(self.index_path):
-            os.makedirs(self.index_path)
+    def saveIndex(self, list_of_tensors, index_set):
+        
+        if index_set == 'train_set':
+            path = os.path.join(self.index_path, 'train_set')
+        elif index_set == 'validation_set':
+            path = os.path.join(self.index_path, 'validation_set')
+        
+
+        if not os.path.exists(path):
+            os.makedirs(path)
         
         for b, batch in enumerate(list_of_tensors):
             array = batch.cpu().numpy()
-            img_index = np.array_split(array.flatten(), self.batch_size)
-            for i, img in enumerate(img_index):
-                
-                path_save = os.path.join(self.index_path, f"idx_array_batch_{b}_{i}.npy")
-                np.save(path_save, img)
 
-    def loadIndex(self, batch_size):
+            path_save = os.path.join(path, f"idx_array_img_{b}.npy")
+            np.save(path_save, array.flatten())
+
+    def loadIndex(self, batch_size, index_set):
+        if index_set == 'train_set':
+            path = os.path.join(self.index_path, 'train_set')
+        elif index_set == 'validation_set':
+            path = os.path.join(self.index_path, 'validation_set')
         
-        arrays_files = os.listdir(self.index_path)
+        arrays_files = os.listdir(path)
         list_of_arrays = []
         for file in arrays_files:
-            array = np.load(os.path.join(self.index_path, file))
-            print(array.shape)
+            array = np.load(os.path.join(path, file))
+            
             list_of_arrays.append(torch.tensor(array))
 
         tensor_of_tensors = torch.stack(list_of_arrays)

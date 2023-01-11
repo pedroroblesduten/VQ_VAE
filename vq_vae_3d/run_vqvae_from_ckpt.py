@@ -17,30 +17,29 @@ class MriRunVQVAE:
         self.loader_mri = LoadMRI(args)
         self.saver_mri = SaveMRI(args)
         self.saver_index = LoadSaveIndex(args)
-        self.run_batch_size = 1
         self.forward_run(args)
 
-    def forward_run(self, args, verbose=False):
+    def forward(self, args, verbose=False):
         if args.run_from_pre_trained:
             self.mri_vqvae.load_state_dict(torch.load(args.ckpt_path))
 
         self.mri_vqvae.eval()
         all_index = []
-        #mri_imgs = self.loader_mri.loadImages(separate_by_class=True)
-        mri_imgs = fake_dataset(args.batch_size)
+        #mri_imgs = self.loader_mri.loadImages(separate_by_class=True, run=False)
+        mri_imgs = fake_dataset(1)
         steps_per_epoch = len(mri_imgs)
 
         with tqdm(range(steps_per_epoch)) as pbar:
             for i, imgs in zip(pbar, mri_imgs):
-
                 imgs = imgs.to(args.device)[:, :, :88, :104, :88]
                 decoded_imgs, index, _, = self.mri_vqvae(imgs)
                 all_index.append(index)
+                
                 #self.saveImage(decoded_images, f'output_img_{i}')
 
             pbar.update(0)
 
-        self.saver_index.saveIndex(all_index)
+        self.saver_index.saveIndex(all_index, 'train_set')
 
 
 if __name__ == '__main__':
@@ -72,6 +71,7 @@ if __name__ == '__main__':
     parser.add_argument('--run_from_pre_trained', type=bool, default=False)
     parser.add_argument('--index_path', type=str, default="C:/Users/pedro/OneDrive/Área de Trabalho/save_index")
     parser.add_argument('--save_mode', type=str, default='run', help='run or training or corrected')
+    
 
 
     args = parser.parse_args()
@@ -79,27 +79,33 @@ if __name__ == '__main__':
 
     run_vqgan = MriRunVQVAE(args, verbose=args.verbose)
     loader = LoadSaveIndex(args)
-    index = loader.loadIndex(2)
-    for x in index:
-        print(x.shape)
+    index = loader.loadIndex(2, 'train_set')
+    for a in index:
+        print(f'SHAPE OF LATENT SPACE INDEX: {a.shape}')
+        break
+
+    
+
 
     gptconf = GPTconfig(
-    block_size = 1573, # how far back does the model look? i.e. context size
-    n_layers = 1, n_heads = 2, embedding_dim = 768 # size of the mod, # for determinism
-)
-    device = 'cuda'
-    model = GPT(gptconf)
-    model.to(device)
+        block_size=1573, # context size
+        n_layers = 2, # number of decoder blocks
+        n_heads = 4, # number of heads
+        embedding_dim = 768 # size of the model
+    )
 
+    device = 'cuda'
+    model = GPT(gptconf).to(device)
     optimizer = model.configure_optimizers(weight_decay=1e-2, learning_rate=1e-4,betas=(0.9, 0.95))
 
 
-# sequence = torch.randint(low=1, high=1025,(batch_size, block_size))
+    for batch in index:
+        batch = batch.to(device)
+        out, loss = model(batch)
+        print(out.shape)
+        print(f'LOSS SHAPE: {out.shape}')
 
-    out = model.generate(index, 3)
-    print(out.shape)
-
-    print(out)
+        print(out)
 
 
         
