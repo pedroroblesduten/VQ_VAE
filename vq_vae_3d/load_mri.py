@@ -119,7 +119,7 @@ class LoadSaveIndex():
             path_save = os.path.join(path, f"idx_array_img_{b}.npy")
             np.save(path_save, array.flatten())
 
-    def loadIndex(self, batch_size, index_set):
+    def loadIndex(self, batch_size, index_set, returnY = False):
         if index_set == 'train_set':
             path = os.path.join(self.index_path, 'train_set')
         elif index_set == 'validation_set':
