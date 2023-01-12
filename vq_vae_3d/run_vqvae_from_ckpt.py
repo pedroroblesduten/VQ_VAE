@@ -29,18 +29,21 @@ class MriRunVQVAE:
         mri_imgs = fake_dataset(1)
         steps_per_epoch = len(mri_imgs)
         all_index = {}
+        all_imgs = {}
         with tqdm(range(steps_per_epoch)) as pbar:
             for i, file in zip(pbar, mri_imgs):
                 imgs = mri_imgs[file]
                 imgs = imgs.to(args.device)[:, :, :88, :104, :88]
                 decoded_imgs, index, _, = self.mri_vqvae(imgs)
                 all_index[file] = index
+                all_imgs[file] = decoded_images
                 
                 
                 #self.saveImage(decoded_images, f'output_img_{i}')
 
             pbar.update(0)
-        print(all_index)
+
+        self.saver_mri.save_for_forward_run(all_imgs)
         self.saver_index.saveIndex(all_index, 'train_set')
 
 

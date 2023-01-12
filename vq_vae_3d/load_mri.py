@@ -99,8 +99,7 @@ class LoadMRI:
                 img_tensor = torch.tensor(nib.get_fdata(img_nii))
                 images[file] = img_tensor[None, None, :, :, :]
 
-        return images            
-        
+        return images
 
 
 class SaveMRI:
@@ -130,6 +129,24 @@ class SaveMRI:
         save_path = os.path.join(full_path, img_path + '.nii.gz')
             
         nib.save(img_nii, save_path)
+
+    def save_for_forward_run(self, dict_of_tensors):
+        for file_name in dict_of_tensors:
+            tensor = dict_of_tensors[file_name]
+            img_array = tensor[0, 0, :, :, :].to('cpu').detach().numpy()
+            img_nii = nib.Nifti1Image(img_array, np.eye(4))
+            repo_name = 'forward_results_with_name'
+            full_path = os.path.join(self.save_path, repo_name)
+            if not os.path.exists(full_path):
+                os.makedirs(full_path)
+
+                save_path = os.path.join(full_path, img_path + '.nii.gz')
+            
+                nib.save(img_nii, save_path)
+
+
+
+
 
 
 class LoadSaveIndex():
