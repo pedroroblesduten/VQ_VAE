@@ -21,26 +21,35 @@ class LoadMRI:
     def getImagePath(self, separate_by_class=True):
         csv = pd.read_csv(self.args.csv_path)
         csv = csv.sample(frac=1)
-        if separate_by_class:
-            ad = csv.loc[csv['Group'] == 'AD']
-            ad_imgs =[os.sep.join([self.dataPath, f]) for f in list(ad['folder'])]
-            
 
+        if separate_by_class:
+
+            ad = csv.loc[csv['Group'] == 'AD']
+            ad_imgs = {}
+            for file in list(ad['folder']):
+                ad_imgs[file] = os.path.join(self.dataPath, file)            
 
             cn = csv.loc[csv['Group'] == 'CN']
-            cn_imgs = [os.sep.join([self.dataPath, f]) for f in list(cn['folder'])]
+            cn_imgs = {}
+            for file in list(cn['folder']):
+                cn_imgs[file] = os.path.join(self.dataPath, file)
 
             mci = csv.loc[csv['Group'] == 'MCI']
-            mci_imgs = [os.sep.join([self.dataPath, f]) for f in list(mci['folder'])]
+            mci_imgs = {}
+            for file in list(mci['folder']):
+                mci_imgs[file] = os.path.join(self.dataPath, file)
 
             return ad_imgs, cn_imgs, mci_imgs
 
         else:
-            images = [os.sep.join([self.dataPath, f]) for f in list(csv['folder'])]
+            for file in list(csv['folder']):
+                images[file] = os.path.join(self.dataPath, file)
             return images
+
             
 
     def loadImages(self, separate_by_class=True):
+
         if separate_by_class:
             ad_imgs, cn_imgs, mci_imgs = self.getImagePath()
 
@@ -59,7 +68,39 @@ class LoadMRI:
             imgs_dataset = ImageDataset(image_files=images, transform=self.transforms)
             imgs_dataloader = DataLoader(imgs_dataset, batch_size=self.batch_size)
             return imgs_dataloader
+    
+    def load_for_forward_run(self, classe=None):
+        images = {}
+        if classe == None:
+            img_path_dict = self.getImagePath(separate_by_class=False)
+            for file in img_path_dict:
+                img_nii = nib.load(img_path_dict[file])
+                img_tensor = torch.tensor(nib.get_fdata(img_nii))
+                images[file] = img_tensor
 
+        if classe == 'AD' or classe == 'ad':
+            img_path_dict, _, none = self.getImagePath()
+            for file in img_path_dict:
+                img_nii = nib.load(img_path_dict[file])
+                img_tensor = torch.tensor(nib.get_fdata(img_nii))
+                images[file] = img_tensor[None, None, :, :, :]
+
+        if classe == 'CN' or classe == 'cn':
+            _, img_path_dict, none = self.getImagePath()
+            for file in img_path_dict:
+                img_nii = nib.load(img_path_dict[file])
+                img_tensor = torch.tensor(nib.get_fdata(img_nii))
+                images[file] = img_tensor[None, None, : ,:, :]
+
+        if classe == 'MCI' or classe == 'mci':
+            _, none, img_path_dict = self.getImagePath()
+            for file in img_path_dict:
+                img_nii = nib.load(img_path_dict[file])
+                img_tensor = torch.tensor(nib.get_fdata(img_nii))
+                images[file] = img_tensor[None, None, :, :, :]
+
+        return images            
+        
 
 
 class SaveMRI:
@@ -102,7 +143,7 @@ class LoadSaveIndex():
         if not os.path.exists(path):
             os.makedirs(path)
 
-    def saveIndex(self, list_of_tensors, index_set):
+    def saveIndex(self, dict_of_tensors, index_set):
         
         if index_set == 'train_set':
             path = os.path.join(self.index_path, 'train_set')
@@ -113,10 +154,10 @@ class LoadSaveIndex():
         if not os.path.exists(path):
             os.makedirs(path)
         
-        for b, batch in enumerate(list_of_tensors):
-            array = batch.cpu().numpy()
+        for file_name in dict_of_tensors:
+            array = dict_of_tensors[file_name].cpu().numpy()
 
-            path_save = os.path.join(path, f"idx_array_img_{b}.npy")
+            path_save = os.path.join(path, f"index_{file_name}.npy")
             np.save(path_save, array.flatten())
 
     def loadIndex(self, batch_size, index_set, returnY = False):
@@ -139,8 +180,7 @@ class LoadSaveIndex():
         return dataloader
 
             
-            
-
+        
 
         
 

@@ -60,13 +60,17 @@ def plot_images(images):
     axarr[0].imshow(x.cpu().detach().numpy()[0].transpose(1, 2, 0))
     axarr[1].imshow(reconstruction.cpu().detach().numpy()[0].transpose(1, 2, 0))
     axarr[2].imshow(half_sample.cpu().detach().numpy()[0].transpose(1, 2, 0))
-    axarr[3].imshow(full_sample.cpu().detach().numpy()[0].transpose(1, 2, 0))
+    axarr[3].imshow(full_sample.cpu().daetach().numpy()[0].transpose(1, 2, 0))
     plt.show()
 
 def fake_dataset(batch_size, n_images=10):
-    data = torch.stack([torch.randn(1, 88, 104, 88) for i in range(n_images)])
-    dataloader = DataLoader(data, batch_size=batch_size, shuffle=True)
-    return dataloader
+    images = {}
+    img_name = ['img1', 'img2', 'img3', 'img4', 'img5', 'img6',
+                'img7', 'img8', 'img9', 'img10']
+    for img in range(n_images):
+        images[img_name[img]] = torch.randn(batch_size, 1, 88, 104, 88)
+    
+    return images
 
     
 

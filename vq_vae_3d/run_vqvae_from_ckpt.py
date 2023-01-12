@@ -19,7 +19,7 @@ class MriRunVQVAE:
         self.saver_index = LoadSaveIndex(args)
         self.forward_run(args)
 
-    def forward(self, args, verbose=False):
+    def forward_run(self, args, verbose=False):
         if args.run_from_pre_trained:
             self.mri_vqvae.load_state_dict(torch.load(args.ckpt_path))
 
@@ -28,17 +28,19 @@ class MriRunVQVAE:
         #mri_imgs = self.loader_mri.loadImages(separate_by_class=True, run=False)
         mri_imgs = fake_dataset(1)
         steps_per_epoch = len(mri_imgs)
-
+        all_index = {}
         with tqdm(range(steps_per_epoch)) as pbar:
-            for i, imgs in zip(pbar, mri_imgs):
+            for i, file in zip(pbar, mri_imgs):
+                imgs = mri_imgs[file]
                 imgs = imgs.to(args.device)[:, :, :88, :104, :88]
                 decoded_imgs, index, _, = self.mri_vqvae(imgs)
-                all_index.append(index)
+                all_index[file] = index
+                
                 
                 #self.saveImage(decoded_images, f'output_img_{i}')
 
             pbar.update(0)
-
+        print(all_index)
         self.saver_index.saveIndex(all_index, 'train_set')
 
 
